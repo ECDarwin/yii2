@@ -1,30 +1,23 @@
 Models
 ======
+模型是MVC架构的一部分。它是代表了业务数据、规则和逻辑的对象.
 
-Models are part of the [MVC](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) architecture.
-They are objects representing business data, rules and logic.
+你可以通过扩展 [[yii\base\Model]] 或者它的子类来创建。基类 [[yii\base\Model]] 支持非常多有用的功能：
 
-You can create model classes by extending [[yii\base\Model]] or its child classes. The base class
-[[yii\base\Model]] supports many useful features:
+* [属性](#attributes): 代表业务数据并且能够像访问普通对象属性进行访问。
+* [属性标签](#attribute-labels): 为属性定义展示的标签
+* [块赋值](#massive-assignment): 支持在单个步骤填充多个属性
+* [校验规则](#validation-rules): 确保输入数据基于声明的验证规则
+* [数据输出](#data-exporting): 允许模型数据按照定制的数组格式被输出
 
-* [Attributes](#attributes): represent the business data and can be accessed like normal object properties
-  or array elements;
-* [Attribute labels](#attribute-labels): specify the display labels for attributes;
-* [Massive assignment](#massive-assignment): supports populating multiple attributes in a single step;
-* [Validation rules](#validation-rules): ensures input data based on the declared validation rules;
-* [Data Exporting](#data-exporting): allows model data to be exported in terms of arrays with customizable formats.
+`Model` 类同样也是高级模型的基类, 例如[活动记录](db-active-record.md).
+关于更多有关高级模型的细节请参考相关文档.
 
-The `Model` class is also the base class for more advanced models, such as [Active Record](db-active-record.md).
-Please refer to the relevant documentation for more details about these advanced models.
+> 信息；你的模型类不需要强制基于 [[yii\base\Model]]. 然而，因为有很多 Yii 组件支持 [[yii\base\Model]], 它通常是更可取的模型基类.
 
-> Info: You are not required to base your model classes on [[yii\base\Model]]. However, because there are many Yii
-  components built to support [[yii\base\Model]], it is usually the preferable base class for a model.
+## 属性 <a name="attributes"></a>
 
-
-## Attributes <a name="attributes"></a>
-
-Models represent business data in terms of *attributes*. Each attribute is like a publicly accessible property
-of a model. The method [[yii\base\Model::attributes()]] specifies what attributes a model class has.
+模型依据 *attributes* 代表了业务数据. 每个属性就像模型一个可获取的公有属性。方法 [[yii\base\Model::attributes)()]] 指出了模型类所具有的属性。
 
 You can access an attribute like accessing a normal object property:
 
@@ -54,11 +47,9 @@ foreach ($model as $name => $value) {
 ```
 
 
-### Defining Attributes <a name="defining-attributes"></a>
+### 定义属性 <a name="defining-attributes"></a>
 
-By default, if your model class extends directly from [[yii\base\Model]], all its *non-static public* member
-variables are attributes. For example, the `ContactForm` model class below has four attributes: `name`, `email`,
-`subject` and `body`. The `ContactForm` model is used to represent the input data received from an HTML form.
+默认情况下，如果你的模型类直接扩展自 [[yii\base\Model]], 它所有的 *non-static public* 成员变量都是属性。例如， 下面的 `ContactForm` 拥有四个属性：`name`, `email`, `subject`, 和 `body`. `ContactForm` 模型被用来代表页面form的输入数据。
 
 ```php
 namespace app\models;
@@ -74,21 +65,13 @@ class ContactForm extends Model
 }
 ```
 
+你可以以重写 [[yii\base\Model::attributes()]] 的方式来重新定义属性。这个方法需要返回模型所有属性的名称。例如, [[yii\db\ActiveRecord]] 通过返回关联的数据库表的列名来代表模型的属性。注意，你必须重写一些魔术方法如 `__get()`, `__set()` 以保证属性可以被访问到。
 
-You may override [[yii\base\Model::attributes()]] to define attributes in a different way. The method should
-return the names of the attributes in a model. For example, [[yii\db\ActiveRecord]] does so by returning
-the column names of the associated database table as its attribute names. Note that you may also need to
-override the magic methods such as `__get()`, `__set()` so that the attributes can be accessed like
-normal object properties.
+### 属性标签 <a name="attribute-labels"></a>
 
+当为属性展示值或者获取输入时，常常需要展示一些标签来关联属性。例如，已知 `firstName` 属性, 你想在用户界面或者错误信息展示更加友好的展示为 `Frist Name`.
 
-### Attribute Labels <a name="attribute-labels"></a>
-
-When displaying values or getting input for attributes, you often need to display some labels associated
-with attributes. For example, given an attribute named `firstName`, you may want to display a label `First Name`
-which is more user-friendly when displayed to end users in places such as form inputs and error messages.
-
-You can get the label of an attribute by calling [[yii\base\Model::getAttributeLabel()]]. For example,
+你可以通过调用 [[yii\base\Model::getAttributeLabel()]] 来获取属性的标签。例如：
 
 ```php
 $model = new \app\models\ContactForm;
@@ -97,13 +80,9 @@ $model = new \app\models\ContactForm;
 echo $model->getAttributeLabel('name');
 ```
 
-By default, attribute labels are automatically generated from attribute names. The generation is done by
-the method [[yii\base\Model::generateAttributeLabel()]]. It will turn camel-case variable names into
-multiple words with the first letter in each word in upper case. For example, `username` becomes `Username`,
-and `firstName` becomes `First Name`.
+默认情况，属性标签自动产生自属性名。生成通过 [[yii\base\Model::generateAttributeLabel()]] 方法来实现。它将把多个单词以驼峰变量命名法来返回，例如, `username` 变成 `Username`, `firstName` 变成 `First Name`.
 
-If you do not want to use automatically generated labels, you may override [[yii\base\Model::attributeLabels()]]
-to explicitly declare attribute labels. For example,
+如果你不想使用自动生成的标签，你可以重写  [[yii\base\Model::attributeLabels()]] 方法来重新定义属性标签。例如：
 
 ```php
 namespace app\models;
@@ -128,9 +107,7 @@ class ContactForm extends Model
     }
 }
 ```
-
-For applications supporting multiple languages, you may want to translate attribute labels. This can be done
-in the [[yii\base\Model::attributeLabels()|attributeLabels()]] method as well, like the following:
+当应用支持多语言，你可以在 [[yii\base\Model::attributeLabels()|attributeLabels()]] 方法中来实现反意思：
 
 ```php
 public function attributeLabels()
@@ -144,23 +121,15 @@ public function attributeLabels()
 }
 ```
 
-You may even conditionally define attribute labels. For example, based on the [scenario](#scenarios) the model
-is being used in, you may return different labels for the same attribute.
+你甚至可以有条件地定义属性标签.例如, 基于模型中使用的 [scenario](#scenario),你可以为相同的属性返回不同的标签。
 
-> Info: Strictly speaking, attribute labels are part of [views](structure-views.md). But declaring labels
-  in models is often very convenient and can result in very clean and reusable code.
+> 提示，严格来讲，属性标签是 [views](structure-views.md) 的一部分. 但是在模型中定义标签将会更加方便，整洁和可重用代码.
 
+## 场景 <a name="scenarios"></a>
 
-## Scenarios <a name="scenarios"></a>
+一个模型可以在不同的场景中使用。例如，`User` 模型可以在收集用户登录信息时使用，也可以用在用户注册。在不同的场景中，模型需要使用不同的业务规则和逻辑。例如，`email` 属性需要在用户注册时必填，但在登录时则不需要这么做。
 
-A model may be used in different *scenarios*. For example, a `User` model may be used to collect user login inputs,
-but it may also be used for the user registration purpose. In different scenarios, a model may use different
-business rules and logic. For example, the `email` attribute may be required during user registration,
-but not so during user login.
-
-A model uses the [[yii\base\Model::scenario]] property to keep track of the scenario it is being used in.
-By default, a model supports only a single scenario named `default`. The following code shows two ways of
-setting the scenario of a model:
+模型使用 [[yii\base\Model::scenario]] 来记录正在使用的场景。默认情况下，模型支持一个名为 `default` 的场景。接下来的代码展示了两种设置场景的方方。
 
 ```php
 // scenario is set as a property
@@ -170,10 +139,7 @@ $model->scenario = 'login';
 // scenario is set through configuration
 $model = new User(['scenario' => 'login']);
 ```
-
-By default, the scenarios supported by a model are determined by the [validation rules](#validation-rules) declared
-in the model. However, you can customize this behavior by overriding the [[yii\base\Model::scenarios()]] method,
-like the following:
+默认情况下，场景是不是被一个模型所支持是由在模型中声明的 [validation rules](#validation-rules) 来决定的。然而，你可以通过重写 [[yii\base\Model::scenarios()]] 方法来定制这个行为。
 
 ```php
 namespace app\models;
@@ -192,17 +158,12 @@ class User extends ActiveRecord
 }
 ```
 
-> Info: In the above and following examples, the model classes are extending from [[yii\db\ActiveRecord]]
+> 提示: 在以上的和接下来的列子中, 模型扩展自 [[yii\db\ActiveRecord]],  这是因为多个场景的使用通常发生在 [Active Record] 类中。
   because the usage of multiple scenarios usually happens to [Active Record](db-active-record.md) classes.
 
-The `scenarios()` method returns an array whose keys are the scenario names and values the corresponding
-*active attributes*. An active attribute can be [massively assigned](#massive-assignment) and is subject
-to [validation](#validation-rules). In the above example, the `username` and `password` attributes are active
-in the `login` scenario; while in the `register` scenario, `email` is also active besides `username` and `password`.
+`scenarios()` 方法返回一个数组，键值是场景名称，对应的值为激活的属性。一个激活的属性能被 [大量分配](#massive-assignment)并受 [vallidaton](#validation-rules) 的支配。在上面的例子中， `username` 和 `password` 属性是激活的在 `login` 场景下。当在 `register` 场景下， 除了 `username` 和 `password` 之外，`email` 也是激活的。
 
-The default implementation of `scenarios()` will return all scenarios found in the validation rule declaration
-method [[yii\base\Model::rules()]]. When overriding `scenarios()`, if you want to introduce new scenarios
-in addition to the default ones, you may write code like the following:
+默认的 `scenarios()` 的实现将会返回在验证规则声明方法中 [[yii\base\Model::rules()]] 找到的所有的场景。当重写 `scenarios()` 时,如果你想在默认的中引入新的场景，你可以像下面这样：
 
 ```php
 namespace app\models;
@@ -220,24 +181,15 @@ class User extends ActiveRecord
     }
 }
 ```
-
-The scenario feature is primarily used by [validation](#validation-rules) and [massive attribute assignment](#massive-assignment).
-You can, however, use it for other purposes. For example, you may declare [attribute labels](#attribute-labels)
-differently based on the current scenario.
+场景功能主要被 [validation](#validation-rules) 和 [massive attribute assignment](#massive-assignment) 所使用。
+你可以以其他目的来使用。例如，你可以基友当前的场景来声明不同的 [attribute labels](#attribute-labels)。
 
 
-## Validation Rules <a name="validation-rules"></a>
+## 验证规则 <a name="validation-rules"></a>
 
-When the data for a model is received from end users, it should be validated to make sure it satisfies
-certain rules (called *validation rules*, also known as *business rules*). For example, given a `ContactForm` model,
-you may want to make sure all attributes are not empty and the `email` attribute contains a valid email address.
-If the values for some attributes do not satisfy the corresponding business rules, appropriate error messages
-should be displayed to help the user to fix the errors.
+当一个模型从终端用户接收数据时，它应该被验证来确认是安全的。例如，`ContactForm` 模型，你想让所有的属性都不能为空,并且 `email` 属性包含一个正确的邮件地址。当某些属性的值不符合关联的业务规则时，应该展示适当的错误信息帮助用户修正错误。
 
-You may call [[yii\base\Model::validate()]] to validate the received data. The method will use
-the validation rules declared in [[yii\base\Model::rules()]] to validate every relevant attribute. If no error
-is found, it will return true. Otherwise, it will keep the errors in the [[yii\base\Model::errors]] property
-and return false. For example,
+你可以调用 [[yii\base\Model::validate()]] 来验证接收的数据。该方法将会使用在 [[yii\base\Model::rules()]] 定义的验证规则来验证相关属性。如果没有错误，它将返回true。否则将错误保存在 [[yii\base\Model::errors]] 中并且返回false。例如：
 
 ```php
 $model = new \app\models\ContactForm;
@@ -253,10 +205,7 @@ if ($model->validate()) {
 }
 ```
 
-
-To declare validation rules associated with a model, override the [[yii\base\Model::rules()]] method by returning
-the rules that the model attributes should satisfy. The following example shows the validation rules declared
-for the `ContactForm` model:
+声明模型关联的验证规则，重写 [[yii\base\Model::rules()]] 方法，并在方法中返回模型属性需要满足的规则。接下来的例子展示了为 `ContactForm` 模型定义的验证规则:
 
 ```php
 public function rules()
@@ -271,12 +220,9 @@ public function rules()
 }
 ```
 
-A rule can be used to validate one or multiple attributes, and an attribute may be validated by one or multiple rules.
-Please refer to the [Validating Input](input-validation.md) section for more details on how to declare
-validation rules.
+一个规则能被验证一个或者多个属性，并且一个属性能够被一个或者多个规则进行验证。请参考 [Validating Input](input-validation.md)章节来了解更多验证规则。
 
-Sometimes, you may want a rule to be applied only in certain [scenarios](#scenarios). To do so, you can
-specify the `on` property of a rule, like the following:
+某些时候，你可能想要一个规则在特定的场景所应用。你可以定义一个规则的 `on` 属性：
 
 ```php
 public function rules()
@@ -291,20 +237,14 @@ public function rules()
 }
 ```
 
-If you do not specify the `on` property, the rule would be applied in all scenarios. A rule is called
-an *active rule* if it can be applied in the current [[yii\base\Model::scenario|scenario]].
+如果你不定义 `on` 属性，规则将会在所有的场景中生效。如果一个规则能在当前的 [[yii\base\Model::scenario|scenario]] 生效则被称为 激活的规则。
 
-An attribute will be validated if and only if it is an active attribute declared in `scenarios()` and
-is associated with one or multiple active rules declared in `rules()`.
+一个属性将会被验证当且仅当它是一个在 `scenarios()` 中声明的激活属性 并且在 `rules()` 中有一个或者多个激活的规则。
 
+## 块赋值 <a name="massive-assignment"></a>
 
-## Massive Assignment <a name="massive-assignment"></a>
-
-Massive assignment is a convenient way of populating a model with user inputs using a single line of code.
-It populates the attributes of a model by assigning the input data directly to the [[yii\base\Model::$attributes]]
-property. The following two pieces of code are equivalent, both trying to assign the form data submitted by end users
-to the attributes of the `ContactForm` model. Clearly, the former, which uses massive assignment, is much cleaner
-and less error prone than the latter:
+块赋值一个方便的方式来通过用户输入来扩展模型的方法。
+它通过将输入数据赋给 [[yii\base\Model::$attributes]] 来扩展模型属性。下面的两段代码是等价的，都将终端用户提交的表单数据赋值给 `ContactForm` 模型。很明显使用了块赋值的前者比后者更加清晰和少错：
 
 ```php
 $model = new \app\models\ContactForm;
@@ -321,13 +261,9 @@ $model->body = isset($data['body']) ? $data['body'] : null;
 ```
 
 
-### Safe Attributes <a name="safe-attributes"></a>
+### 安全属性 <a name="safe-attributes"></a>
 
-Massive assignment only applies to the so-called *safe attributes* which are the attributes listed in
-[[yii\base\Model::scenarios()]] for the current [[yii\base\Model::scenario|scenario]] of a model.
-For example, if the `User` model has the following scenario declaration, then when the current scenario
-is `login`, only the `username` and `password` can be massively assigned. Any other attributes will
-be kept untouched.
+块赋值只应用模型当前场景中列出的属性。例如，如果 `User` 模型有以下的场景声明，那么当当前的场景为`login` 时，只有 `username` 和 `password` 属性能够被赋值。
 
 ```php
 public function scenarios()
@@ -344,13 +280,9 @@ public function scenarios()
   has a `permission` attribute which determines the permission assigned to the user, you would
   like this attribute to be modifiable by administrators through a backend interface only.
 
-Because the default implementation of [[yii\base\Model::scenarios()]] will return all scenarios and attributes
-found in [[yii\base\Model::rules()]], if you do not override this method, it means an attribute is safe as long
-as it appears in one of the active validation rules.
+因为默认的 [[yii\base\Model::scenarios()]] 实现将会返回在 [[yii\base\Model::rules()]] 找到的所有的场景和属性，如果你没有重写这个方法，这意味着在激活的验证规则存在属性都是安全属性。
 
-For this reason, a special validator aliased `safe` is provided so that you can declare an attribute
-to be safe without actually validating it. For example, the following rules declare that both `title`
-and `description` are safe attributes.
+因为这个原因，一个特殊的名为 `safe` 的验证器被提供，你可以声明一个属性是安全的没有实际的验证它。例如，下面的规则声明 `title` 和 `description` 都是安全属性:
 
 ```php
 public function rules()
@@ -361,13 +293,10 @@ public function rules()
 }
 ```
 
+### 不安全属性 <a name="unsafe-attributes"></a>
 
-### Unsafe Attributes <a name="unsafe-attributes"></a>
-
-As described above, the [[yii\base\Model::scenarios()]] method serves for two purposes: determining which attributes
-should be validated, and determining which attributes are safe. In some rare cases, you may want to validate
-an attribute but do not want to mark it safe. You can do so by prefixing an exclamation mark `!` to the attribute
-name when declaring it in `scenarios()`, like the `secret` attribute in the following:
+正如以上所介绍的，[[yii\base\Model::scenarios()]] 方法有两个目的：定义哪些属性应该被验证，并且定义哪些属性是安全的。
+在很少的情况下，你可能想要验证一个属性但是不想标记为安全属性。你可以在属性名前置一个感叹号：
 
 ```php
 public function scenarios()
@@ -377,50 +306,38 @@ public function scenarios()
     ];
 }
 ```
-
-When the model is in the `login` scenario, all three attributes will be validated. However, only the `username`
-and `password` attributes can be massively assigned. To assign an input value to the `secret` attribute, you
-have to do it explicitly as follows,
+当模型在 `login` 场景，三个属性全被验证。然而，只有 `username` 和 `password` 属性可以被块赋值。将一个输入值赋值给 `secret` 属性，你可以像下面这样做：
 
 ```php
 $model->secret = $secret;
 ```
 
 
-## Data Exporting <a name="data-exporting"></a>
+## 数据导出 <a name="data-exporting"></a>
 
-Models often need to be exported in different formats. For example, you may want to convert a collection of
-models into JSON or Excel format. The exporting process can be broken down into two independent steps.
-In the first step, models are converted into arrays; in the second step, the arrays are converted into
-target formats. You may just focus on the first step, because the second step can be achieved by generic
-data formatters, such as [[yii\web\JsonResponseFormatter]].
+模型经常会议不同的格式进行导出。例如，你想将模型集合转化为JSON或者Excel。导出过程可以分为两步。
+第一步，模型被转化为数组。第二部，数组转化为目标格式。你只需关注在第一步，第二部可以被通用的数据格式所获取，比如 [[yii\web\JsonResponseFormatter]].
 
-The simplest way of converting a model into an array is to use the [[yii\base\Model::$attributes]] property.
-For example,
+最简单的方法将模型转化为数组是使用 [[yii\base\Model::$attributes]].例如：
 
 ```php
 $post = \app\models\Post::findOne(100);
 $array = $post->attributes;
 ```
 
-By default, the [[yii\base\Model::$attributes]] property will return the values of *all* attributes
-declared in [[yii\base\Model::attributes()]].
+默认的， [[yii\base\Model::$attributes]] 返回在 [[yii\base\Model::attributes()]] 声明的所有的属性。
 
-A more flexible and powerful way of converting a model into an array is to use the [[yii\base\Model::toArray()]]
-method. Its default behavior is the same as that of [[yii\base\Model::$attributes]]. However, it allows you
-to choose which data items, called *fields*, to be put in the resulting array and how they should be formatted.
-In fact, it is the default way of exporting models in RESTful Web service development, as described in
-the [Response Formatting](rest-response-formatting.md).
+更加灵活有力的方法是使用 [[yii\base\Model::toArray()]] 方法来转化为数组。它默认的行为和 [[yii\base\Model::$attributes]] 一样。然而，它允许你选择那些数据(字段)，被放到结果数组中并且他们怎样被格式化。
+实际上，在RESTfull开发中它是默认的方法 [Response Formatting](rest-response-formatting.md).
 
 
-### Fields <a name="fields"></a>
+### 字段 <a name="fields"></a>
 
 A field is simply a named element in the array that is obtained by calling the [[yii\base\Model::toArray()]] method
 of a model.
 
-By default, field names are equivalent to attribute names. However, you can change this behavior by overriding
-the [[yii\base\Model::fields()|fields()]] and/or [[yii\base\Model::extraFields()|extraFields()]] methods. Both methods
-should return a list of field definitions. The fields defined by `fields()` are default fields, meaning that
+默认情况下，字段名称和属性名是一样的。然而，你可以通过重写 [[yii\base\Model::fields()|fields()]] 和/或者 [[yii\base\Model::extraFields|extraFields()]] 方法来改变这个默认的行为。两个方法都应该返回一个字段定义的列表。
+The fields defined by `fields()` are default fields, meaning that
 `toArray()` will return these fields by default. The `extraFields()` method defines additionally available fields
 which can also be returned by `toArray()` as long as you specify them via the `$expand` parameter. For example,
 the following code will return all fields defined in `fields()` and the `prettyName` and `fullAddress` fields
