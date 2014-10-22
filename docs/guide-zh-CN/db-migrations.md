@@ -167,134 +167,89 @@ yii migrate/up 3
 yii migrate/to 101129_185401
 ```
 
-That is, we use the timestamp part of a migration name to specify the version
-that we want to migrate the database to. If there are multiple migrations between
-the last applied migration and the specified migration, all these migrations
-will be applied. If the specified migration has been applied before, then all
-migrations applied after it will be reverted (to be described in the next section).
+即，我们使用迁移名的时间戳部分来指定我们想要迁移数据库的版本。如果在最新应用的迁移和指定的迁移中有多个迁移，所有的迁移都会被应用。如果指定的迁移之前应用过，那么所有的迁移会在恢复后被应用（下章节会讲到）。
 
-
-Reverting Migrations
+恢复迁移
 --------------------
 
-To revert the last one or several applied migrations, we can use the following
-command:
+恢复上一次或者几次迁移，我们可以使用下面的命令：
 
 ```
 yii migrate/down [step]
 ```
 
-where the optional `step` parameter specifies how many migrations to be reverted
-back. It defaults to 1, meaning reverting back the last applied migration.
+`step` 参数指定恢复多少个迁移。默认为1，回滚到上一次迁移。
 
-As we described before, not all migrations can be reverted. Trying to revert
-such migrations will throw an exception and stop the whole reverting process.
+正如我们之前描述的，并不是所有的迁移都可以被回滚。回滚这样的迁移会抛出异常并且停止整个回滚进程。
 
-
-Redoing Migrations
+重新迁移
 ------------------
 
-Redoing migrations means first reverting and then applying the specified migrations.
-This can be done with the following command:
+重新迁移意思是首先回滚然后应用指定的迁移。这可以用下面的命令：
 
 ```
 yii migrate/redo [step]
 ```
 
-where the optional `step` parameter specifies how many migrations to be redone.
-It defaults to 1, meaning redoing the last migration.
+可选的`step`参数指定多少迁移被重做。默认为1，重做上一次迁移。
 
-
-Showing Migration Information
+展示迁移信息
 -----------------------------
 
-Besides applying and reverting migrations, the migration tool can also display
-the migration history and the new migrations to be applied.
+除了应用和回滚迁移之外，迁移工具同样能够展示迁移历史和最新应用的迁移。
 
 ```
 yii migrate/history [limit]
 yii migrate/new [limit]
 ```
 
-where the optional parameter `limit` specifies the number of migrations to be
-displayed. If `limit` is not specified, all available migrations will be displayed.
+可选的 `limit` 参数指定了展示迁移的个数。如果 `limit` 没被指定，那么所有的迁移信息被展示。
 
-The first command shows the migrations that have been applied, while the second
-command shows the migrations that have not been applied.
+第一个命令展示被应用的迁移，第二个命名展示了没用被应用的迁移。
 
-
-Modifying Migration History
+修改迁移历史
 ---------------------------
 
-Sometimes, we may want to modify the migration history to a specific migration
-version without actually applying or reverting the relevant migrations. This
-often happens when developing a new migration. We can use the following command
-to achieve this goal.
+有些时候，我们想修改迁移历史来指定迁移版本但不应用或者回滚相关的迁移。这在开发新的迁移时常常发生。我们可以使用下面的命令来实现这个目的。
 
 ```
 yii migrate/mark 101129_185401
 ```
 
-This command is very similar to `yii migrate/to` command, except that it only
-modifies the migration history table to the specified version without applying
-or reverting the migrations.
+这个命令和 `yii migrate/to` 相似，除了它仅仅修改迁移历史表来指定版本而不会应用或者回滚迁移。
 
 
-Customizing Migration Command
+定制迁移命令
 -----------------------------
 
-There are several ways to customize the migration command.
+有几个方法来定制迁移命令。
 
-### Use Command Line Options
+### 使用命令行选项
 
-The migration command comes with few options that can be specified in command
-line:
+迁移命令有几个选项能够在命令行中指定：
 
-* `interactive`: boolean, specifies whether to perform migrations in an
-  interactive mode. Defaults to true, meaning the user will be prompted when
-  performing a specific migration. You may set this to false should the
-  migrations be done in a background process.
+* `interactive`: boolean, 指定是否在交互的模式下执行迁移。默认为ture，意味着在执行特定迁移时会提示用户。你可以设置为false让迁移在后台运行
+* `migrationPath`: string, 指定存贮迁移类文件的目录。必须指定为路劲别名，并且相关的目录必须存在。如果没指定，将会使用应用目录下的 `migrations` 子目录。
+* `migrationTable`: string, 指定保存迁移历史信息的数据库表。表的结构为 `version varchar(255) primary key, apply_time integer`。
+* `db`: string, 指定数据库的ID[应用组件](structure-application-components.md)。默认为 "db"。
+* `templateFile`: string, 指定存储生成的迁移类文件的路径。必须指定为路径别名（例如，`application.migrations.template`）。如果没指定，将会使用内部模板。在模板里面，`{ClassName}` 将会被替换为实际的类名。
 
-* `migrationPath`: string, specifies the directory storing all migration class
-  files. This must be specified in terms of a path alias, and the corresponding
-  directory must exist. If not specified, it will use the `migrations`
-  sub-directory under the application base path.
-
-* `migrationTable`: string, specifies the name of the database table for storing
-  migration history information. It defaults to `migration`. The table
-  structure is `version varchar(255) primary key, apply_time integer`.
-
-* `db`: string, specifies the ID of the database [application component](structure-application-components.md).
-  Defaults to 'db'.
-
-* `templateFile`: string, specifies the path of the file to be served as the code
-  template for generating the migration classes. This must be specified in terms
-  of a path alias (e.g. `application.migrations.template`). If not set, an
-  internal template will be used. Inside the template, the token `{ClassName}`
-  will be replaced with the actual migration class name.
-
-To specify these options, execute the migrate command using the following format
+以下面的格式的来执行迁移命令来指定选项。
 
 ```
 yii migrate/up --option1=value1 --option2=value2 ...
 ```
 
-For example, if we want to migrate for a `forum` module whose migration files
-are located within the module's `migrations` directory, we can use the following
-command:
+例如，如果我们想迁移 `forum` 模块下的 `migrations` 目录的迁移文件，我们可以使用下面的命令：
 
 ```
 yii migrate/up --migrationPath=@app/modules/forum/migrations
 ```
 
 
-### Configure Command Globally
+### 配置全局命令
 
-While command line options allow us to configure the migration command
-on-the-fly, sometimes we may want to configure the command once for all.
-For example, we may want to use a different table to store the migration history,
-or we may want to use a customized migration template. We can do so by modifying
-the console application's configuration file like the following,
+命令行的选项让我们在迁移的时候手忙脚乱，有些时候我们想一次性配置所有的命令。例如，我们想要使用不同的表来存储迁移历史，或者我们想要使用定制的迁移模板。我们可以像下面这样来修改命令行应用的配置文件，
 
 ```php
 'controllerMap' => [
@@ -304,27 +259,19 @@ the console application's configuration file like the following,
     ],
 ]
 ```
+现在我们执行 `migrate` 命令，上面的配置将会起作用就不用每次在命令行中输入选项。其他的命令选项也可以像这样配置。
 
-Now if we run the `migrate` command, the above configurations will take effect
-without requiring us to enter the command line options every time. Other command options
-can be also configured this way.
+### 迁移多个数据库
 
-
-### Migrating with Multiple Databases
-
-By default, migrations will be applied to the database specified by the `db` [application component](structure-application-components.md).
-You may change it by specifying the `--db` option, for example,
+默认情况下，迁移应用到 `db` [application componet](structure-application-components.md) 指定的数据库。
 
 ```
 yii migrate --db=db2
 ```
 
-The above command will apply *all* migrations found in the default migration path to the `db2` database.
+上面的命令将会应用所有的的迁移文件到 `db2` 数据库。
 
-If your application works with multiple databases, it is possible that some migrations should be applied
-to one database while some others should be applied to another database. In this case, it is recommended that
-you create a base migration class for each different database and override the [[yii\db\Migration::init()]]
-method like the following,
+如果你的应用使用多个数据库，那么就有可能一些迁移应用到一个数据库，另外一些迁移应用到另外一个数据库。既然这样，建议你为每个通用的数据创建一个迁移基类，然后像下面这样重写 [[yii\db\Migration::init()]] 方法，
 
 ```php
 public function init()
@@ -334,17 +281,13 @@ public function init()
 }
 ```
 
-To create a migration that should be applied to a particular database, simply extend from the corresponding
-base migration class. Now if you run the `yii migrate` command, each migration will be applied to its corresponding database.
+创建一个应用到特别数据的迁移，扩展相应的迁移基类即可。现在如果你运行 `yii migrate` ，每个迁移都会应用相应的数据库。
 
-> Info: Because each migration uses hardcoded DB connection, the `--db` option of the `migrate` command will
-  have no effect. Also note that the migration history will be stored in the default `db` database.
+> 提示: 因为每个迁移使用了硬编码的DB连接， `--db` 选项将不会起作用。同样注意迁移历史会存储在默认的 `db` 数据库。
 
-If you want to support changing DB connection via the `--db` option, you may take the following alternative
-approach to work with multiple databases.
+如果你希望支持通过 `--db` 选项改变数据连接，你可以使用下面供选择的方法来使用多个数据库。
 
-For each database, create a migration path and save all corresponding migration classes there. To apply migrations,
-run the command as follows,
+每个数据库，创建一个迁移路径，并且保存所有相关的迁移类。指向下面的命令来应用迁移：
 
 ```
 yii migrate --migrationPath=@app/migrations/db1 --db=db1
@@ -352,4 +295,4 @@ yii migrate --migrationPath=@app/migrations/db2 --db=db2
 ...
 ```
 
-> Info: The above approach stores the migration history in different databases specified via the `--db` option.
+> 提示：上面的方法将迁移历史存储到通过 `--db` 选项指定的不同的数据库。
